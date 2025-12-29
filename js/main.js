@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GUIController } from './gui.js';
 import RubikCube from './objects/RubikCube.js';
 
 class MainApp {
@@ -16,6 +17,7 @@ class MainApp {
     this.init();
     this.addEvents();
     this.animate();
+    this.guiController = new GUIController(this);
   }
 
   init() {
@@ -31,7 +33,7 @@ class MainApp {
 
   initScene() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0f172a);
+    this.scene.background = null;
   }
 
   initCamera() {
@@ -44,9 +46,11 @@ class MainApp {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
+      alpha: false
     });
 
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setClearColor(0x30415c);
   }
 
   initControls() {
