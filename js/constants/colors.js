@@ -1,4 +1,3 @@
-
 export const RUBIK_COLORS = {
   UP: 0xff0000, // red
   DOWN: 0xffff00, // yellow
@@ -8,4 +7,3 @@ export const RUBIK_COLORS = {
   LEFT: 0xff8c00, // orange
   NONE: 0x111111, // inner / hidden
 };
-

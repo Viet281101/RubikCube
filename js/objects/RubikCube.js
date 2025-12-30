@@ -3,11 +3,7 @@ import Cube from './Cube.js';
 import { RUBIK_COLORS } from '../constants/colors.js';
 
 export default class RubikCube {
-  constructor({
-    size = 3,
-    cubieSize = 1,
-    gap = 0.05,
-  } = {}) {
+  constructor({ size = 3, cubieSize = 1, gap = 0.05 } = {}) {
     this.size = size;
     this.cubieSize = cubieSize;
     this.gap = gap;
@@ -20,10 +16,10 @@ export default class RubikCube {
 
   /**
    * Create materials for each face of the Cubie
-    * Conventions:
-    * - leftRight: 0 → Left, max → Right
-    * - downUp: 0 → Down, max → Up
-    * - backFront: 0 → Back, max → Front
+   * Conventions:
+   * - leftRight: 0 → Left, max → Right
+   * - downUp: 0 → Down, max → Up
+   * - backFront: 0 → Back, max → Front
    */
   _createCubieMaterials(leftRight, downUp, backFront) {
     const max = this.size - 1;
@@ -38,7 +34,7 @@ export default class RubikCube {
     ];
 
     return faces.map(
-      color =>
+      (color) =>
         new THREE.MeshStandardMaterial({
           color,
         })
@@ -55,7 +51,6 @@ export default class RubikCube {
     for (let leftRight = 0; leftRight < this.size; leftRight++) {
       for (let downUp = 0; downUp < this.size; downUp++) {
         for (let backFront = 0; backFront < this.size; backFront++) {
-
           // Position render (ThreeJS with XYZ)
           const position = {
             x: (leftRight - offset) * spacing,
@@ -93,10 +88,10 @@ export default class RubikCube {
    * Dispose all geometry & material
    */
   dispose() {
-    this.group.children.forEach(child => {
+    this.group.children.forEach((child) => {
       child.geometry.dispose();
       if (Array.isArray(child.material)) {
-        child.material.forEach(m => m.dispose());
+        child.material.forEach((m) => m.dispose());
       } else {
         child.material.dispose();
       }

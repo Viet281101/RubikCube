@@ -10,7 +10,7 @@ export class GUIController {
     };
     this.init();
     this.checkWindowSize();
-  };
+  }
 
   init() {
     this.gui = new GUI();
@@ -23,28 +23,38 @@ export class GUIController {
       guiContainer.style.transform = 'scale(1.5)';
     }
 
-    this.gui.addColor(this.settings, 'backgroundColor').name('Background Color').onChange((value) => {
-      this.mainApp.renderer.setClearColor(value);
-    });
-
-    this.gui.add(this.settings, 'size', 2, 10, 1).name('Cube Size').onChange((value) => {
-      this.mainApp.rebuildCube({
-        size: Math.floor(value),
-        cubieSize: 1,
-        gap: this.settings.gap,
+    this.gui
+      .addColor(this.settings, 'backgroundColor')
+      .name('Background Color')
+      .onChange((value) => {
+        this.mainApp.renderer.setClearColor(value);
       });
-    });
 
-    this.gui.add(this.settings, 'gap', 0, 0.2, 0.01).name('Gap').onChange((value) => {
-      this.mainApp.rebuildCube({
-        size: this.settings.size,
-        cubieSize: 1,
-        gap: value,
+    this.gui
+      .add(this.settings, 'size', 2, 10, 1)
+      .name('Cube Size')
+      .onChange((value) => {
+        this.mainApp.rebuildCube({
+          size: Math.floor(value),
+          cubieSize: 1,
+          gap: this.settings.gap,
+        });
       });
-    });
-  };
+
+    this.gui
+      .add(this.settings, 'gap', 0, 0.2, 0.01)
+      .name('Gap')
+      .onChange((value) => {
+        this.mainApp.rebuildCube({
+          size: this.settings.size,
+          cubieSize: 1,
+          gap: value,
+        });
+      });
+  }
 
   checkWindowSize() {
-    this.gui.domElement.style.display = window.innerWidth <= 800 ? 'none' : 'block';
-  };
-};
+    this.gui.domElement.style.display =
+      window.innerWidth <= 800 ? 'none' : 'block';
+  }
+}

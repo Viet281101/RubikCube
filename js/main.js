@@ -2,6 +2,10 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GUIController } from './gui.js';
 import RubikCube from './objects/RubikCube.js';
+import RotationManager from './core/RotationManager.js';
+import RotateControls from './ui/RotateControls.js';
+import ModeIndicator from './ui/ModeIndicator.js';
+import { INTERACT_MODE } from './constants/index.js';
 
 class MainApp {
   constructor() {
@@ -13,11 +17,16 @@ class MainApp {
     this.controls = null;
 
     this.rubik = null;
+    this.rotationManager = null;
+
+    this.mode = INTERACT_MODE.VIEW;
 
     this.init();
     this.addEvents();
     this.animate();
     this.guiController = new GUIController(this);
+    this.rotateControls = new RotateControls(this);
+    this.modeIndicator = new ModeIndicator(this);
   }
 
   init() {
@@ -27,6 +36,7 @@ class MainApp {
     this.initControls();
     this.initLights();
     this.initRubik();
+    this.initRotationManager();
 
     this.resize();
   }
@@ -46,7 +56,7 @@ class MainApp {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: true,
-      alpha: false
+      alpha: false,
     });
 
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -54,10 +64,7 @@ class MainApp {
   }
 
   initControls() {
-    this.controls = new OrbitControls(
-      this.camera,
-      this.renderer.domElement
-    );
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
@@ -86,6 +93,15 @@ class MainApp {
     this.scene.add(this.rubik.object3D);
   }
 
+  initRotationManager() {
+    this.rotationManager = new RotationManager({
+      scene: this.scene,
+      camera: this.camera,
+      domElement: this.renderer.domElement,
+      rubik: this.rubik,
+    });
+  }
+
   addEvents() {
     window.addEventListener('resize', () => this.resize());
   }
@@ -106,6 +122,7 @@ class MainApp {
     requestAnimationFrame(() => this.animate());
 
     this.controls.update();
+    this.rotationManager.update();
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -113,6 +130,22 @@ class MainApp {
     this.scene.remove(this.rubik.object3D);
     this.rubik.rebuild(options);
     this.scene.add(this.rubik.object3D);
+  }
+
+  enterRotateMode() {
+    if (this.mode === INTERACT_MODE.ROTATE) return;
+
+    this.mode = INTERACT_MODE.ROTATE;
+    this.controls.enabled = false;
+    this.rotationManager.enable();
+  }
+
+  exitRotateMode() {
+    if (this.mode === INTERACT_MODE.VIEW) return;
+
+    this.mode = INTERACT_MODE.VIEW;
+    this.controls.enabled = true;
+    this.rotationManager.disable();
   }
 }
 
