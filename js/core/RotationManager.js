@@ -15,6 +15,7 @@ export default class RotationManager {
     this.domElement = domElement;
     this.rubik = rubik;
     this.history = history;
+    this.locked = false;
 
     // Helper classes
     this.raycastHelper = new RaycastHelper(camera, rubik);
@@ -120,7 +121,7 @@ export default class RotationManager {
   }
 
   _onPointerDown(event) {
-    if (!this.enabled || this.isRotating) return;
+    if (!this.enabled || this.isRotating || this.locked) return;
 
     const intersect = this.raycastHelper.raycast(event, this.domElement);
     if (!intersect) return;
@@ -135,21 +136,16 @@ export default class RotationManager {
     this.active.face = face;
     this.active.axis = axis;
     this.active.layer = layer;
-
     this.active.faceNormal = normal;
-    this.active.cameraRight = new THREE.Vector3();
-    this.active.cameraUp = new THREE.Vector3();
-    this.camera.getWorldDirection(
-      (this.active.cameraForward ??= new THREE.Vector3())
-    );
-    this.active.cameraRight.setFromMatrixColumn(this.camera.matrixWorld, 0);
-    this.active.cameraUp.setFromMatrixColumn(this.camera.matrixWorld, 1);
+
+    this._updateCameraVectors();
 
     this.drag.startX = event.clientX;
     this.drag.startY = event.clientY;
     this.drag.dragging = true;
 
     this.faceHighlighter.hide();
+    this.locked = true;
 
     console.log('[RotationManager]', {
       face,
@@ -162,35 +158,16 @@ export default class RotationManager {
   _onPointerMove(event) {
     if (!this.enabled || this.isRotating) return;
 
-    const intersect = this.raycastHelper.raycast(event, this.domElement);
-
-    if (intersect && !this.drag.dragging) {
-      this.faceHighlighter.show(intersect);
-    } else {
-      this.faceHighlighter.hide();
+    if (!this.locked) {
+      this._handleHoverHighlight(event);
     }
 
     if (!this.drag.dragging || !this.active.face) return;
 
-    this.drag.dx = event.clientX - this.drag.startX;
-    this.drag.dy = event.clientY - this.drag.startY;
-
-    const threshold = 6;
+    this._updateDragDistance(event);
 
     if (!this.drag.axis) {
-      if (
-        Math.abs(this.drag.dx) < threshold &&
-        Math.abs(this.drag.dy) < threshold
-      ) {
-        return;
-      }
-
-      this.drag.axis =
-        Math.abs(this.drag.dx) > Math.abs(this.drag.dy)
-          ? DRAG_AXIS.HORIZONTAL
-          : DRAG_AXIS.VERTICAL;
-
-      console.log('[Drag locked]', this.drag.axis);
+      this._determineDragAxis();
     }
   }
 
@@ -201,6 +178,57 @@ export default class RotationManager {
       return;
     }
 
+    this._startRotation();
+  }
+
+  /* =======================
+   * Helper methods
+   * ======================= */
+
+  _updateCameraVectors() {
+    this.active.cameraRight = new THREE.Vector3();
+    this.active.cameraUp = new THREE.Vector3();
+    this.camera.getWorldDirection(
+      (this.active.cameraForward ??= new THREE.Vector3())
+    );
+    this.active.cameraRight.setFromMatrixColumn(this.camera.matrixWorld, 0);
+    this.active.cameraUp.setFromMatrixColumn(this.camera.matrixWorld, 1);
+  }
+
+  _handleHoverHighlight(event) {
+    if (this.drag.dragging) return;
+
+    const intersect = this.raycastHelper.raycast(event, this.domElement);
+    if (intersect) {
+      this.faceHighlighter.show(intersect);
+    } else {
+      this.faceHighlighter.hide();
+    }
+  }
+
+  _updateDragDistance(event) {
+    this.drag.dx = event.clientX - this.drag.startX;
+    this.drag.dy = event.clientY - this.drag.startY;
+  }
+
+  _isDragBelowThreshold(threshold = 6) {
+    return (
+      Math.abs(this.drag.dx) < threshold && Math.abs(this.drag.dy) < threshold
+    );
+  }
+
+  _determineDragAxis() {
+    if (this._isDragBelowThreshold()) return;
+
+    this.drag.axis =
+      Math.abs(this.drag.dx) > Math.abs(this.drag.dy)
+        ? DRAG_AXIS.HORIZONTAL
+        : DRAG_AXIS.VERTICAL;
+
+    console.log('[Drag locked]', this.drag.axis);
+  }
+
+  _startRotation() {
     const { rotateAxis, direction } = CameraDragResolver.resolve({
       dx: this.drag.dx,
       dy: this.drag.dy,
@@ -274,6 +302,9 @@ export default class RotationManager {
     this.drag.axis = null;
     this.drag.dx = 0;
     this.drag.dy = 0;
+
+    this.locked = false;
+    this.faceHighlighter.hide();
   }
 
   _applyInstantRotation({ axis, layer, direction }) {

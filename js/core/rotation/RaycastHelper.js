@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FACES, AXES } from '../../constants/index.js';
+import { FACES, AXES, AXIS_TO_INDEX_KEY } from '../../constants/index.js';
 
 /**
  * Helper class for raycasting and face detection
@@ -57,37 +57,30 @@ export default class RaycastHelper {
    * Determine face and axis from normal vector
    */
   getFaceFromNormal(normal) {
-    const absX = Math.abs(normal.x);
-    const absY = Math.abs(normal.y);
-    const absZ = Math.abs(normal.z);
-
-    if (absX > absY && absX > absZ) {
-      return {
-        axis: AXES.X,
-        face: normal.x > 0 ? FACES.RIGHT : FACES.LEFT,
-      };
-    }
-
-    if (absY > absX && absY > absZ) {
-      return {
-        axis: AXES.Y,
-        face: normal.y > 0 ? FACES.UP : FACES.DOWN,
-      };
-    }
-
-    return {
-      axis: AXES.Z,
-      face: normal.z > 0 ? FACES.FRONT : FACES.BACK,
+    const abs = {
+      x: Math.abs(normal.x),
+      y: Math.abs(normal.y),
+      z: Math.abs(normal.z),
     };
+
+    const dominant = Object.entries(abs).reduce(
+      (max, [key, val]) => (val > max.val ? { key, val } : max),
+      { key: 'x', val: abs.x }
+    );
+
+    const faceMap = {
+      x: { axis: AXES.X, face: normal.x > 0 ? FACES.RIGHT : FACES.LEFT },
+      y: { axis: AXES.Y, face: normal.y > 0 ? FACES.UP : FACES.DOWN },
+      z: { axis: AXES.Z, face: normal.z > 0 ? FACES.FRONT : FACES.BACK },
+    };
+
+    return faceMap[dominant.key];
   }
 
   /**
    * Get layer index from cubie based on axis
    */
   getLayerFromCubie(cubie, axis) {
-    if (axis === AXES.X) return cubie.index.leftRight;
-    if (axis === AXES.Y) return cubie.index.downUp;
-    if (axis === AXES.Z) return cubie.index.backFront;
-    return null;
+    return cubie.index[AXIS_TO_INDEX_KEY[axis]] ?? null;
   }
 }

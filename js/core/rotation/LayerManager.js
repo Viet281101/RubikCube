@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { AXES } from '../../constants/index.js';
+import { AXES, AXIS_TO_INDEX_KEY } from '../../constants/index.js';
 
 /**
  * Helper class for managing rotation groups and layers
@@ -11,15 +11,18 @@ export default class LayerManager {
   }
 
   /**
+   * Check if cubie is in specific layer
+   */
+  _isInLayer(cubie, axis, layer) {
+    const indexKey = AXIS_TO_INDEX_KEY[axis];
+    return cubie.index[indexKey] === layer;
+  }
+
+  /**
    * Get all cubies in a specific layer
    */
   getCubiesInLayer(axis, layer) {
-    return this.rubik.cubies.filter((c) => {
-      if (axis === AXES.X) return c.index.leftRight === layer;
-      if (axis === AXES.Y) return c.index.downUp === layer;
-      if (axis === AXES.Z) return c.index.backFront === layer;
-      return false;
-    });
+    return this.rubik.cubies.filter((c) => this._isInLayer(c, axis, layer));
   }
 
   /**
@@ -29,11 +32,7 @@ export default class LayerManager {
     const group = new THREE.Group();
 
     this.rubik.cubies.forEach((cubie) => {
-      if (
-        (axis === AXES.X && cubie.index.leftRight === layer) ||
-        (axis === AXES.Y && cubie.index.downUp === layer) ||
-        (axis === AXES.Z && cubie.index.backFront === layer)
-      ) {
+      if (this._isInLayer(cubie, axis, layer)) {
         group.add(cubie.object3D);
       }
     });
@@ -66,44 +65,26 @@ export default class LayerManager {
    * Update cubie indices after rotation
    */
   commitCubieIndex(cubies, rotateAxis, direction) {
-    cubies.forEach((cubie) => {
-      const idx = cubie.index;
-
-      if (rotateAxis === AXES.X) {
+    const rotationLogic = {
+      [AXES.X]: (idx, dir) => {
         const { downUp, backFront } = idx;
-
-        if (direction > 0) {
-          idx.downUp = 2 - backFront;
-          idx.backFront = downUp;
-        } else {
-          idx.downUp = backFront;
-          idx.backFront = 2 - downUp;
-        }
-      }
-
-      if (rotateAxis === AXES.Y) {
+        idx.downUp = dir > 0 ? 2 - backFront : backFront;
+        idx.backFront = dir > 0 ? downUp : 2 - downUp;
+      },
+      [AXES.Y]: (idx, dir) => {
         const { leftRight, backFront } = idx;
-
-        if (direction > 0) {
-          idx.leftRight = backFront;
-          idx.backFront = 2 - leftRight;
-        } else {
-          idx.leftRight = 2 - backFront;
-          idx.backFront = leftRight;
-        }
-      }
-
-      if (rotateAxis === AXES.Z) {
+        idx.leftRight = dir > 0 ? backFront : 2 - backFront;
+        idx.backFront = dir > 0 ? 2 - leftRight : leftRight;
+      },
+      [AXES.Z]: (idx, dir) => {
         const { leftRight, downUp } = idx;
+        idx.leftRight = dir > 0 ? 2 - downUp : downUp;
+        idx.downUp = dir > 0 ? leftRight : 2 - leftRight;
+      },
+    };
 
-        if (direction > 0) {
-          idx.leftRight = 2 - downUp;
-          idx.downUp = leftRight;
-        } else {
-          idx.leftRight = downUp;
-          idx.downUp = 2 - leftRight;
-        }
-      }
+    cubies.forEach((cubie) => {
+      rotationLogic[rotateAxis]?.(cubie.index, direction);
     });
   }
 }

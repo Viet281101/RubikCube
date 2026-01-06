@@ -27,10 +27,24 @@ export default class HistoryControls {
     this.undoBtn.addEventListener('click', () => {
       this.app.rotationManager.undo();
     });
+    this.undoBtn.addEventListener(
+      'dblclick',
+      (e) => {
+        e.preventDefault();
+      },
+      { passive: false }
+    );
 
     this.redoBtn.addEventListener('click', () => {
       this.app.rotationManager.redo();
     });
+    this.redoBtn.addEventListener(
+      'dblclick',
+      (e) => {
+        e.preventDefault();
+      },
+      { passive: false }
+    );
 
     window.addEventListener('keydown', (event) => {
       if (event.ctrlKey && event.key === 'z') {

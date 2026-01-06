@@ -41,3 +41,9 @@ export const FACE_TO_SIGN = {
   [FACES.FRONT]: +1,
   [FACES.BACK]: -1,
 };
+
+export const AXIS_TO_INDEX_KEY = {
+  [AXES.X]: 'leftRight',
+  [AXES.Y]: 'downUp',
+  [AXES.Z]: 'backFront',
+};
