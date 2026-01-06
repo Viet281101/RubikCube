@@ -74,6 +74,14 @@ export default class RotationManager {
     this._resetState();
   }
 
+  /**
+   * Reset manager when cube is rebuilt
+   */
+  reset() {
+    this.disable();
+    this.history.clear();
+  }
+
   update(delta = 1 / 60) {
     if (!this.isRotating || !this.rotation) return;
 

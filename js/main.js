@@ -12,20 +12,18 @@ import { INTERACT_MODE } from './constants/index.js';
 class MainApp {
   constructor() {
     this.canvas = document.getElementById('scene');
-
     this.scene = null;
     this.camera = null;
     this.renderer = null;
     this.controls = null;
-
     this.rubik = null;
     this.rotationManager = null;
-
     this.mode = INTERACT_MODE.VIEW;
 
     this.init();
     this.addEvents();
     this.animate();
+
     this.guiController = new GUIController(this);
     this.rotateControls = new RotateControls(this);
     this.modeIndicator = new ModeIndicator(this);
@@ -39,7 +37,6 @@ class MainApp {
     this.initLights();
     this.initRubik();
     this.initRotationManager();
-
     this.resize();
   }
 
@@ -60,14 +57,12 @@ class MainApp {
       antialias: true,
       alpha: false,
     });
-
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearColor(0x30415c);
   }
 
   initControls() {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-
     this.controls.enableDamping = true;
     this.controls.dampingFactor = 0.08;
     this.controls.enablePan = false;
@@ -91,7 +86,6 @@ class MainApp {
       cubieSize: 1,
       gap: 0.06,
     });
-
     this.scene.add(this.rubik.object3D);
   }
 
@@ -105,6 +99,24 @@ class MainApp {
       history: this.history,
     });
     this.historyControls = new HistoryControls(this);
+
+    // Listen to history changes to lock/unlock cube size
+    this._setupHistoryWatcher();
+  }
+
+  _setupHistoryWatcher() {
+    // Store original push method
+    const originalPush = this.history.push.bind(this.history);
+
+    // Override push to detect first rotation
+    this.history.push = (move) => {
+      originalPush(move);
+
+      // Lock cube size after first rotation
+      if (this.guiController) {
+        this.guiController.lockCubeEdit();
+      }
+    };
   }
 
   addEvents() {
@@ -117,7 +129,6 @@ class MainApp {
 
     if (this.canvas.width !== width || this.canvas.height !== height) {
       this.renderer.setSize(width, height, false);
-
       this.camera.aspect = width / height;
       this.camera.updateProjectionMatrix();
     }
@@ -125,21 +136,35 @@ class MainApp {
 
   animate() {
     requestAnimationFrame(() => this.animate());
-
     this.controls.update();
     this.rotationManager.update();
     this.renderer.render(this.scene, this.camera);
   }
 
   rebuildCube(options) {
+    // Exit rotate mode if active
+    if (this.mode === INTERACT_MODE.ROTATE) {
+      this.exitRotateMode();
+    }
+
+    // Reset rotation manager and history
+    this.rotationManager.reset();
+
+    // Rebuild cube
     this.scene.remove(this.rubik.object3D);
     this.rubik.rebuild(options);
     this.scene.add(this.rubik.object3D);
+
+    // Unlock cube size after rebuild (fresh cube)
+    if (this.guiController) {
+      this.guiController.unlockCubeEdit();
+    }
+
+    console.log(`[Cube rebuilt] size: ${this.rubik.size}x${this.rubik.size}`);
   }
 
   enterRotateMode() {
     if (this.mode === INTERACT_MODE.ROTATE) return;
-
     this.mode = INTERACT_MODE.ROTATE;
     this.controls.enabled = false;
     this.rotationManager.enable();
@@ -147,7 +172,6 @@ class MainApp {
 
   exitRotateMode() {
     if (this.mode === INTERACT_MODE.VIEW) return;
-
     this.mode = INTERACT_MODE.VIEW;
     this.controls.enabled = true;
     this.rotationManager.disable();

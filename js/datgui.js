@@ -8,6 +8,13 @@ export class GUIController {
       size: 3,
       gap: 0.06,
     };
+
+    // Controllers reference
+    this.controllers = {
+      size: null,
+      gap: null,
+    };
+
     this.init();
     this.checkWindowSize();
   }
@@ -30,7 +37,7 @@ export class GUIController {
         this.mainApp.renderer.setClearColor(value);
       });
 
-    this.gui
+    this.controllers.size = this.gui
       .add(this.settings, 'size', 2, 10, 1)
       .name('Cube Size')
       .onChange((value) => {
@@ -41,7 +48,7 @@ export class GUIController {
         });
       });
 
-    this.gui
+    this.controllers.gap = this.gui
       .add(this.settings, 'gap', 0, 0.2, 0.01)
       .name('Gap')
       .onChange((value) => {
@@ -51,6 +58,39 @@ export class GUIController {
           gap: value,
         });
       });
+  }
+
+  /**
+   * Disable cube edit controls when cube has been rotated
+   */
+  lockCubeEdit() {
+    if (this.controllers.size) {
+      this.controllers.size.domElement.style.pointerEvents = 'none';
+      this.controllers.size.domElement.style.opacity = '0.5';
+      this.controllers.size.__li.title =
+        'Cannot change size after rotating cube';
+    }
+    if (this.controllers.gap) {
+      this.controllers.gap.domElement.style.pointerEvents = 'none';
+      this.controllers.gap.domElement.style.opacity = '0.5';
+      this.controllers.gap.__li.title = 'Cannot change gap after rotating cube';
+    }
+  }
+
+  /**
+   * Enable cube edit controls (called after rebuild)
+   */
+  unlockCubeEdit() {
+    if (this.controllers.size) {
+      this.controllers.size.domElement.style.pointerEvents = '';
+      this.controllers.size.domElement.style.opacity = '1';
+      this.controllers.size.__li.title = '';
+    }
+    if (this.controllers.gap) {
+      this.controllers.gap.domElement.style.pointerEvents = '';
+      this.controllers.gap.domElement.style.opacity = '1';
+      this.controllers.gap.__li.title = '';
+    }
   }
 
   checkWindowSize() {

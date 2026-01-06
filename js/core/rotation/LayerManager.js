@@ -63,23 +63,47 @@ export default class LayerManager {
 
   /**
    * Update cubie indices after rotation
+   * Works for any cube size (3x3, 4x4, 5x5, etc.)
    */
   commitCubieIndex(cubies, rotateAxis, direction) {
+    const max = this.rubik.size - 1;
+
     const rotationLogic = {
       [AXES.X]: (idx, dir) => {
         const { downUp, backFront } = idx;
-        idx.downUp = dir > 0 ? 2 - backFront : backFront;
-        idx.backFront = dir > 0 ? downUp : 2 - downUp;
+        if (dir > 0) {
+          // Clockwise rotation (looking from +X)
+          idx.downUp = max - backFront;
+          idx.backFront = downUp;
+        } else {
+          // Counter-clockwise rotation
+          idx.downUp = backFront;
+          idx.backFront = max - downUp;
+        }
       },
       [AXES.Y]: (idx, dir) => {
         const { leftRight, backFront } = idx;
-        idx.leftRight = dir > 0 ? backFront : 2 - backFront;
-        idx.backFront = dir > 0 ? 2 - leftRight : leftRight;
+        if (dir > 0) {
+          // Clockwise rotation (looking from +Y)
+          idx.leftRight = backFront;
+          idx.backFront = max - leftRight;
+        } else {
+          // Counter-clockwise rotation
+          idx.leftRight = max - backFront;
+          idx.backFront = leftRight;
+        }
       },
       [AXES.Z]: (idx, dir) => {
         const { leftRight, downUp } = idx;
-        idx.leftRight = dir > 0 ? 2 - downUp : downUp;
-        idx.downUp = dir > 0 ? leftRight : 2 - leftRight;
+        if (dir > 0) {
+          // Clockwise rotation (looking from +Z)
+          idx.leftRight = max - downUp;
+          idx.downUp = leftRight;
+        } else {
+          // Counter-clockwise rotation
+          idx.leftRight = downUp;
+          idx.downUp = max - leftRight;
+        }
       },
     };
 
